@@ -43,7 +43,13 @@ def sarsa_lambda(env, alpha=0.2, gamma=0.99, lambda_= 0.9, initial_epsilon=1.0, 
             next_action = epsilon_greedy_action(env, Q, next_state, epsilon)
 
             # TODO update q table and eligibility
-            ...
+            delta = reward + gamma*Q[next_state, next_action] - Q[state, action]
+            E[state, action] += E[state, action]
+
+            for s in env.observation_space:
+                for a in env.action_space:
+                    Q[s, a] = Q[s, a] + alpha*delta*E[s, a]
+                    E[s, a] *= (gamma*lambda_)
 
             if not received_first_reward and reward > 0:
                 received_first_reward = True
