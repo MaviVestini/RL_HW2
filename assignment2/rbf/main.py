@@ -46,7 +46,7 @@ def main():
     parser.add_argument('-e', '--evaluate', default=None)
     args = parser.parse_args()
     
-    
+    train('model.pkl')
     if args.train is not None:
         train(args.train)
 

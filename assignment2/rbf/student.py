@@ -37,12 +37,12 @@ class RBFFeatureEncoder:
 
     def encode(self, state): # modify
         # TODO use the rbf encoder to return the features
-
         # Compute and return the new features
         features = np.linalg.norm(state - self.rbf_centers, axis = 1)/self.rbf_width
+        
         return np.exp(-0.5*(features**2))
 
-    @property
+    @property   
     def size(self): # modify
         # TODO return the number of features
         return self.n_components
@@ -73,13 +73,12 @@ class TDLambda_LVFA:
         # TODO update the weights
 
         # td error 
-        delta = reward + self.gamma*self.Q(s_prime_feats).max()*(1 - done) - self.Q(s_feats)[action]
-
+        delta = reward + self.gamma*self.Q(s_prime_feats)[self.policy(s_prime)]*(1 - done) - self.Q(s_feats)[action]
         # eligibility trace
         self.traces *= self.gamma*self.gamma
         self.traces[action] += s_feats
 
-        self.weights[action] += self.alpha*delta*self.weights[action]
+        self.weights[action] += self.alpha*delta*self.traces[action]
         
     def update_alpha_epsilon(self): # do not touch
         self.epsilon = max(self.final_epsilon, self.epsilon*self.epsilon_decay)
@@ -107,7 +106,7 @@ class TDLambda_LVFA:
                 action = self.epsilon_greedy(s)
                 s_prime, reward, done, _, _ = self.env.step(action)
                 self.update_transition(s, action, s_prime, reward, done)
-                
+
                 s = s_prime
                 
                 if done: break
@@ -116,6 +115,7 @@ class TDLambda_LVFA:
 
             if episode % 20 == 0:
                 print(episode, self.evaluate(), self.epsilon, self.alpha)
+                print(self.traces)
                 
     def evaluate(self, env=None, n_episodes=10, max_steps_per_episode=200): # do not touch
         if env is None:
