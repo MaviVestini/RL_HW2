@@ -26,16 +26,26 @@ class RBFFeatureEncoder:
     def __init__(self, env): # modify
         self.env = env
         # TODO init rbf encoder
-        ...
+        self.n_components = 10
+        
+        # Define the centers putting together the coordinates
+        self.rbf_centers = np.random.random((self.n_components, 2))
+
+        # Randomly select the width associated with the centers
+        self.rbf_width = 1#np.random.rand(self.n_components)
+
 
     def encode(self, state): # modify
         # TODO use the rbf encoder to return the features
-        return ...
+
+        # Compute and return the new features
+        features = np.linalg.norm(state - self.rbf_centers, axis = 1)/self.rbf_width
+        return np.exp(-0.5*(features**2))
 
     @property
     def size(self): # modify
         # TODO return the number of features
-        return ...
+        return self.n_components
 
 class TDLambda_LVFA:
     def __init__(self, env, feature_encoder_cls=RBFFeatureEncoder, alpha=0.01, alpha_decay=1, 
@@ -61,7 +71,15 @@ class TDLambda_LVFA:
         s_feats = self.feature_encoder.encode(s)
         s_prime_feats = self.feature_encoder.encode(s_prime)
         # TODO update the weights
-        self.weights[action] += ...
+
+        # td error 
+        delta = reward + self.gamma*self.Q(s_prime_feats).max()*(1 - done) - self.Q(s_feats)[action]
+
+        # eligibility trace
+        self.traces *= self.gamma*self.gamma
+        self.traces[action] += s_feats
+
+        self.weights[action] += self.alpha*delta*self.weights[action]
         
     def update_alpha_epsilon(self): # do not touch
         self.epsilon = max(self.final_epsilon, self.epsilon*self.epsilon_decay)
@@ -76,8 +94,8 @@ class TDLambda_LVFA:
         if random.random()<epsilon:
             return self.env.action_space.sample()
         return self.policy(state)
-       
-        
+    
+
     def train(self, n_episodes=200, max_steps_per_episode=200): # do not touch
         print(f'ep | eval | epsilon | alpha')
         for episode in range(n_episodes):
