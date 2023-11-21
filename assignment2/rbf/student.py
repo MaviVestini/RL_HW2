@@ -29,15 +29,17 @@ class RBFFeatureEncoder:
         self.n_components = 300
         # Define the centers putting together the coordinates
         self.encoder = RBFSampler(gamma=0.1, n_components=self.n_components)
-        self.encoder.fit(np.array([self.env.observation_space.sample() for _ in range(100000)]))
-
+        '''
+        sample = np.array([self.env.observation_space.sample() for _ in range(100)]).reshape(-1, 1)
+        self.encoder.fit(sample)
+        '''
 
     def encode(self, state): # modify
         # TODO use the rbf encoder to return the features
         # Compute and return the new features
-        
-        #self.encoder.fit(np.array([self.env.observation_space.sample() for _ in range(self.n_components)]))
-        features = self.encoder.transform(state.reshape(1,-1))
+        sample = np.array([self.env.observation_space.sample() for _ in range(100)]).reshape(-1, 1)
+        self.encoder.fit(sample)
+        features = self.encoder.transform(state.reshape(-1,1))
         return features[0]
 
     @property   
@@ -70,7 +72,7 @@ class TDLambda_LVFA:
         s_prime_feats = self.feature_encoder.encode(s_prime)
         # TODO update the weights
 
-        ## d error 
+        # d error 
         delta = reward + self.gamma * self.Q(s_prime_feats)[self.policy(s_prime)] - self.Q(s_feats)[action]
 
         # eligibility trace
@@ -78,7 +80,7 @@ class TDLambda_LVFA:
         self.traces[action] += s_feats
 
         # weights
-        self.weights-= self.alpha * delta * self.traces
+        self.weights+= self.alpha * delta * self.traces
 
     def update_alpha_epsilon(self): # do not touch
         self.epsilon = max(self.final_epsilon, self.epsilon*self.epsilon_decay)

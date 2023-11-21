@@ -46,8 +46,11 @@ def main():
     parser.add_argument('-e', '--evaluate', default=None)
     args = parser.parse_args()
     
+    # TODO DEL
     train('model.pkl')
     evaluate(fname='model.pkl', render=True)
+    # TODO DEL
+    
     if args.train is not None:
         train(args.train)
 
