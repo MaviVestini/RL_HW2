@@ -49,6 +49,9 @@ def sarsa_lambda(env, alpha=0.2, gamma=0.99, lambda_= 0.9, initial_epsilon=1.0, 
             Q += alpha*delta*E
             E *= (gamma*lambda_)
 
+            if done: 
+                E = np.zeros((env.observation_space.n, env.action_space.n))
+                
             if not received_first_reward and reward > 0:
                 received_first_reward = True
                 print("Received first reward at episode ", ep)

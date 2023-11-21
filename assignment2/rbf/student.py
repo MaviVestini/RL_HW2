@@ -26,21 +26,19 @@ class RBFFeatureEncoder:
     def __init__(self, env): # modify
         self.env = env
         # TODO init rbf encoder
-        self.n_components = 10
-        
+        self.n_components = 300
         # Define the centers putting together the coordinates
-        self.rbf_centers = np.random.random((self.n_components, 2))
-
-        # Randomly select the width associated with the centers
-        self.rbf_width = 1#np.random.rand(self.n_components)
+        self.encoder = RBFSampler(gamma=0.1, n_components=self.n_components)
+        self.encoder.fit(np.array([self.env.observation_space.sample() for _ in range(100000)]))
 
 
     def encode(self, state): # modify
         # TODO use the rbf encoder to return the features
         # Compute and return the new features
-        features = np.linalg.norm(state - self.rbf_centers, axis = 1)/self.rbf_width
         
-        return np.exp(-0.5*(features**2))
+        #self.encoder.fit(np.array([self.env.observation_space.sample() for _ in range(self.n_components)]))
+        features = self.encoder.transform(state.reshape(1,-1))
+        return features[0]
 
     @property   
     def size(self): # modify
@@ -72,14 +70,16 @@ class TDLambda_LVFA:
         s_prime_feats = self.feature_encoder.encode(s_prime)
         # TODO update the weights
 
-        # td error 
-        delta = reward + self.gamma*self.Q(s_prime_feats)[self.policy(s_prime)]*(1 - done) - self.Q(s_feats)[action]
+        ## d error 
+        delta = reward + self.gamma * self.Q(s_prime_feats)[self.policy(s_prime)] - self.Q(s_feats)[action]
+
         # eligibility trace
-        self.traces *= self.gamma*self.gamma
+        self.traces *= self.lambda_ * self.gamma
         self.traces[action] += s_feats
 
-        self.weights[action] += self.alpha*delta*self.traces[action]
-        
+        # weights
+        self.weights-= self.alpha * delta * self.traces
+
     def update_alpha_epsilon(self): # do not touch
         self.epsilon = max(self.final_epsilon, self.epsilon*self.epsilon_decay)
         self.alpha = self.alpha*self.alpha_decay
@@ -115,7 +115,6 @@ class TDLambda_LVFA:
 
             if episode % 20 == 0:
                 print(episode, self.evaluate(), self.epsilon, self.alpha)
-                print(self.traces)
                 
     def evaluate(self, env=None, n_episodes=10, max_steps_per_episode=200): # do not touch
         if env is None:

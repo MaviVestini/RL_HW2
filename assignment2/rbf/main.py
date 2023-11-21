@@ -47,6 +47,7 @@ def main():
     args = parser.parse_args()
     
     train('model.pkl')
+    evaluate(fname='model.pkl', render=True)
     if args.train is not None:
         train(args.train)
 
