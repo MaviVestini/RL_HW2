@@ -26,26 +26,37 @@ class RBFFeatureEncoder:
     def __init__(self, env): # modify
         self.env = env
         # TODO init rbf encoder
-        self.n_components = 300
-        # Define the centers putting together the coordinates
-        self.encoder = RBFSampler(gamma=0.1, n_components=self.n_components)
-        '''
-        sample = np.array([self.env.observation_space.sample() for _ in range(100)]).reshape(-1, 1)
-        self.encoder.fit(sample)
-        '''
+        self.n_components = 100
+
+        self.sigma = 0.1
+
+        # Split the space in intervals both for the x and y axis
+        x = np.linspace(0., 1., 10)
+        y = np.linspace(0., 1., 10)
+
+        # Put them together and define the centers as each possible couple x and y
+        xs, ys = np.meshgrid(x, y)
+        self.centers =  np.stack([xs.ravel(), ys.ravel()], axis = 1)
+
 
     def encode(self, state): # modify
         # TODO use the rbf encoder to return the features
         # Compute and return the new features
-        sample = np.array([self.env.observation_space.sample() for _ in range(100)]).reshape(-1, 1)
-        self.encoder.fit(sample)
-        features = self.encoder.transform(state.reshape(-1,1))
-        return features[0]
+
+        # Normalize the state 
+        lows = self.env.unwrapped.low
+        highs = self.env.unwrapped.high
+        state = 1 - (state - lows)/(highs - lows)
+
+        features = np.linalg.norm(state - self.centers, axis = 1) ** 2
+        return np.exp(-features/(2*self.sigma**2))
 
     @property   
     def size(self): # modify
         # TODO return the number of features
         return self.n_components
+
+
 
 class TDLambda_LVFA:
     def __init__(self, env, feature_encoder_cls=RBFFeatureEncoder, alpha=0.01, alpha_decay=1, 
@@ -71,16 +82,17 @@ class TDLambda_LVFA:
         s_feats = self.feature_encoder.encode(s)
         s_prime_feats = self.feature_encoder.encode(s_prime)
         # TODO update the weights
+        
+        # Compute the td error
+        delta = reward + (1-done)*self.gamma*self.Q(s_prime_feats).max() - self.Q(s_feats)[action]
+        
+        # Update traces
+        self.traces = self.gamma*self.lambda_*self.traces
+        self.traces += s_feats
 
-        # d error 
-        delta = reward + self.gamma * self.Q(s_prime_feats)[self.policy(s_prime)] - self.Q(s_feats)[action]
+        # Update weights
+        self.weights[action] += self.alpha * delta * self.traces[action]
 
-        # eligibility trace
-        self.traces *= self.lambda_ * self.gamma
-        self.traces[action] += s_feats
-
-        # weights
-        self.weights+= self.alpha * delta * self.traces
 
     def update_alpha_epsilon(self): # do not touch
         self.epsilon = max(self.final_epsilon, self.epsilon*self.epsilon_decay)
