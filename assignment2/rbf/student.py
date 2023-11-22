@@ -28,28 +28,25 @@ class RBFFeatureEncoder:
         # TODO init rbf encoder
         self.n_components = 100
 
-        self.sigma = 0.1
+        self.scale = 0.1
+
+        lows = self.env.unwrapped.low
+        highs = self.env.unwrapped.high
 
         # Split the space in intervals both for the x and y axis
-        x = np.linspace(0., 1., 10)
-        y = np.linspace(0., 1., 10)
+        x = np.linspace(lows[0], highs[0], 10)
+        y = np.linspace(lows[1], highs[0], 10)
 
         # Put them together and define the centers as each possible couple x and y
         xs, ys = np.meshgrid(x, y)
-        self.centers =  np.stack([xs.ravel(), ys.ravel()], axis = 1)
+        self.centers =  np.stack([xs.reshape(-1), ys.reshape(-1)], axis = 1)
 
 
     def encode(self, state): # modify
         # TODO use the rbf encoder to return the features
         # Compute and return the new features
-
-        # Normalize the state 
-        lows = self.env.unwrapped.low
-        highs = self.env.unwrapped.high
-        state = 1 - (state - lows)/(highs - lows)
-
         features = np.linalg.norm(state - self.centers, axis = 1) ** 2
-        return np.exp(-features/(2*self.sigma**2))
+        return np.exp(-features/(2*self.scale**2))
 
     @property   
     def size(self): # modify
@@ -88,7 +85,7 @@ class TDLambda_LVFA:
         
         # Update traces
         self.traces = self.gamma*self.lambda_*self.traces
-        self.traces += s_feats
+        self.traces[action] += s_feats
 
         # Update weights
         self.weights[action] += self.alpha * delta * self.traces[action]
