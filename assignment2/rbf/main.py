@@ -48,7 +48,7 @@ def main():
     
     # TODO DEL
     train('model.pkl')
-    evaluate(fname='model.pkl', render=True)
+    evaluate(fname='best_model.pkl', render=True)
     # TODO DEL
     
     if args.train is not None:
