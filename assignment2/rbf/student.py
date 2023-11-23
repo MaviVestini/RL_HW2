@@ -28,8 +28,10 @@ class RBFFeatureEncoder:
         # TODO init rbf encoder
         self.n_components = 100
 
+        # Scale parameter for the custom RBF encoder
         self.scale = 0.1
 
+        # Get the extremes of the env space
         lows = self.env.unwrapped.low
         highs = self.env.unwrapped.high
 

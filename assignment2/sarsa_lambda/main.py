@@ -33,14 +33,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
     render = args.render
 
-    # TODO DEL
-    num_episodes = 10
-    mean_rew = evaluate(num_episodes, True)
-    # TODO DEL
-
     np.random.seed(0)
     import random
     random.seed(0)
     num_episodes = 10
-    #mean_rew = evaluate(num_episodes, render)
+    mean_rew = evaluate(num_episodes, render)
     print("Mean reward over {} episodes: {}".format(num_episodes, mean_rew))
