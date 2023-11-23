@@ -153,3 +153,5 @@ cython_debug/
 
 env_sarsa/
 env_rbf/
+.DS_Store
+.DS_Store
