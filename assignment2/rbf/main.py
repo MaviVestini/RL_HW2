@@ -48,7 +48,6 @@ def main():
     
     if args.train is not None:
         train(args.train)
-
     if args.evaluate:
         evaluate(args.evaluate, render=args.render)
 
